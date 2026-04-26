@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>cfDNA Tools</title>
+  <meta name="description" content="A searchable catalog of cfDNA tools for WGS, methylation, CNA, motif, coverage, and tissue-origin workflows. Produced with AI assistance. Check important info manually." />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #181c23;
+      --panel-2: #11161d;
+      --text: #e9edf3;
+      --muted: #9da8b7;
+      --line: #2a313d;
+      --accent: #8ce99a;
+      --chip: #232b36;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, var(--bg), #0b0d11 50%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    header {
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      margin: 0 0 .5rem;
+    }
+
+    .muted { color: var(--muted); }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .6rem;
+      margin: 1rem 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: .75rem;
+    }
+
+    .toolbar-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .6rem;
+    }
+
+    input {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: .65rem .75rem;
+      font-size: .95rem;
+    }
+
+    .stats {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .status {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: .65rem .7rem;
+      vertical-align: top;
+      font-size: .9rem;
+    }
+
+    th {
+      text-align: left;
+      background: #1d2430;
+      color: #cfd7e3;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    th button {
+      background: transparent;
+      color: inherit;
+      border: 0;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .glyph {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.5rem;
+      font-size: 1rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .75rem;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: .85rem;
+      display: grid;
+      gap: .65rem;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+
+    .card-row {
+      font-size: .88rem;
+      color: var(--muted);
+    }
+
+    .card-row b {
+      color: var(--text);
+      font-weight: 600;
+      margin-right: .35rem;
+    }
+
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .35rem;
+    }
+
+    .cap-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--chip);
+      padding: .35rem .45rem;
+      font-size: .8rem;
+    }
+
+    @media (min-width: 920px) {
+      .wrap { padding: 1.5rem; }
+      .toolbar { grid-template-columns: 1fr auto; align-items: end; }
+      .toolbar-row { grid-template-columns: minmax(320px, 1fr); }
+      .cards { display: none; }
+      .table-wrap { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>cfDNA Tools</h1>
+      <p class="muted">A searchable catalog of cfDNA tools for WGS, methylation, CNA, motif, coverage, and tissue-origin workflows. Produced with AI assistance. Check important info manually.</p>
+    </header>
+
+    <section class="toolbar" aria-label="viewer controls">
+      <div class="toolbar-row">
+        <input id="search" type="search" placeholder="Search tool, paper, inputs, outputs, capabilities…" />
+      </div>
+      <div id="stats" class="stats">Loading…</div>
+    </section>
+
+    <div id="status" class="status">Loading tools.csv…</div>
+
+    <section id="tableWrap" class="table-wrap" aria-label="desktop table view">
+      <table>
+        <thead><tr id="theadRow"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </section>
+
+    <section id="cards" class="cards" aria-label="mobile card view"></section>
+  </div>
+
+  <script>
+    (async function () {
+      const KEPT_COLUMNS = [
+        'Tool', 'Paper', 'Input data', 'Outputs',
+        'Fragment size', 'Motifs', 'Coverage / WPS', 'Methylation',
+        'SNV / CNA', 'Region-level', 'Tissue origin', 'GC / bias'
+      ];
+
+      const INTERNAL_COLUMNS = ['Repo URL'];
+      const REPO_COLUMN_ALIASES = ['Repo URL', 'Repository URL', 'Repository', 'Repo', 'GitHub', 'GitHub URL', 'URL'];
+      const COLUMN_ALIASES = {
+        'Tool': ['Tool', 'Name'],
+        'Paper': ['Paper', 'Publication', 'Citation'],
+        'Input data': ['Input data', 'Inputs', 'Input'],
+        'Outputs': ['Outputs', 'Output'],
+        'Fragment size': ['Fragment size', 'Fragment sizes'],
+        'Motifs': ['Motifs', 'End motifs'],
+        'Coverage / WPS': ['Coverage / WPS', 'Coverage/WPS', 'Coverage', 'WPS'],
+        'Methylation': ['Methylation'],
+        'SNV / CNA': ['SNV / CNA', 'SNV/CNA', 'SNV', 'CNA'],
+        'Region-level': ['Region-level', 'Region level', 'Region'],
+        'Tissue origin': ['Tissue origin', 'Tissue-of-origin', 'Tissue'],
+        'GC / bias': ['GC / bias', 'GC/bias', 'GC bias']
+      };
+
+      const CAPABILITY_COLUMNS = [
+        'Fragment size', 'Motifs', 'Coverage / WPS', 'Methylation',
+        'SNV / CNA', 'Region-level', 'Tissue origin', 'GC / bias'
+      ];
+
+      const statusEl = document.getElementById('status');
+      const searchEl = document.getElementById('search');
+      const statsEl = document.getElementById('stats');
+      const theadRow = document.getElementById('theadRow');
+      const tbody = document.getElementById('tbody');
+      const cardsEl = document.getElementById('cards');
+      const tableWrap = document.getElementById('tableWrap');
+
+      const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+      const decodeHtml = (v) => {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = String(v ?? '');
+        return textarea.value;
+      };
+      const safeUrl = (v) => {
+        const raw = String(v || '').trim();
+        if (!/^https?:\/\//i.test(raw)) return '';
+        try {
+          const u = new URL(raw);
+          return ['http:', 'https:'].includes(u.protocol) ? u.href : '';
+        } catch {
+          return '';
+        }
+      };
+      const valueFromAliases = (row, aliases) => aliases.map((k) => row[k]).find(Boolean) || '';
+      const parseToolCell = (value) => {
+        const raw = String(value || '').trim();
+        const markdown = raw.match(/^\[([^\]]+)\]\((https?:\/\/[^)]+)\)$/i);
+        if (markdown) return { name: markdown[1].trim(), repo: markdown[2].trim() };
+
+        const html = raw.match(/<a\b[^>]*href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/i);
+        if (html) return { name: decodeHtml(html[2].replace(/<[^>]*>/g, '')).trim(), repo: html[1].trim() };
+
+        const hyperlink = raw.match(/^=?HYPERLINK\(\s*["'](https?:\/\/[^"']+)["']\s*,\s*["']([^"']+)["']\s*\)$/i);
+        if (hyperlink) return { name: hyperlink[2].trim(), repo: hyperlink[1].trim() };
+
+        return { name: raw, repo: '' };
+      };
+
+      const symbolOrder = { '✅': 0, '🟡': 1, '❓': 2, '❌': 3, 'N/A': 4, '': 5 };
+      const symbolRank = (v) => symbolOrder[String(v || '').trim()] ?? 9;
+
+      let rows = [];
+      let sortState = { col: 'Tool', dir: 'asc' };
+
+      try {
+        const res = await fetch('./tools.csv', { cache: 'no-cache' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+
+        if (parsed.errors?.length) {
+          console.warn('CSV parse warnings', parsed.errors);
+        }
+
+        rows = parsed.data.map((r) => {
+          const cleaned = {};
+          Object.keys(r).forEach((k) => {
+            const key = String(k || '').replace(/^\uFEFF/, '').trim();
+            cleaned[key] = String(r[k] ?? '').trim();
+          });
+          const kept = {};
+          KEPT_COLUMNS.forEach((k) => { kept[k] = valueFromAliases(cleaned, COLUMN_ALIASES[k] || [k]); });
+          const parsedTool = parseToolCell(kept['Tool']);
+          kept['Tool'] = parsedTool.name;
+          kept['Repo URL'] = safeUrl(valueFromAliases(cleaned, REPO_COLUMN_ALIASES)) || safeUrl(parsedTool.repo);
+          kept._searchText = Object.values(cleaned).join(' ');
+          return kept;
+        });
+      } catch (err) {
+        statusEl.textContent = `Could not load tools.csv: ${err.message}`;
+        return;
+      }
+
+      function renderHeader() {
+        theadRow.innerHTML = '';
+        KEPT_COLUMNS.forEach((col) => {
+          const th = document.createElement('th');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = sortState.col === col ? `${col} ${sortState.dir === 'asc' ? '▲' : '▼'}` : col;
+          btn.addEventListener('click', () => {
+            if (sortState.col === col) {
+              sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+              sortState.col = col;
+              sortState.dir = 'asc';
+            }
+            render();
+          });
+          th.appendChild(btn);
+          theadRow.appendChild(th);
+        });
+      }
+
+      function compareRows(a, b, col, dir) {
+        const av = (a[col] || '').trim();
+        const bv = (b[col] || '').trim();
+
+        const useSymbolSort = CAPABILITY_COLUMNS.includes(col);
+        let cmp;
+        if (useSymbolSort) {
+          cmp = symbolRank(av) - symbolRank(bv);
+        } else {
+          cmp = av.localeCompare(bv, undefined, { sensitivity: 'base', numeric: true });
+        }
+        return dir === 'asc' ? cmp : -cmp;
+      }
+
+      function filterRows() {
+        const q = searchEl.value.trim().toLowerCase();
+        if (!q) return [...rows];
+        return rows.filter((r) => String(r._searchText || '').toLowerCase().includes(q));
+      }
+
+      function renderTable(data) {
+        tbody.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+
+        data.forEach((r) => {
+          const tr = document.createElement('tr');
+          KEPT_COLUMNS.forEach((col) => {
+            const td = document.createElement('td');
+            const value = r[col] || '';
+
+            if (col === 'Tool') {
+              const repo = safeUrl(r['Repo URL']);
+              td.innerHTML = repo
+                ? `<a href="${escapeHtml(repo)}" target="_blank" rel="noopener noreferrer">${escapeHtml(value)}</a>`
+                : escapeHtml(value);
+            } else if (col === 'Paper') {
+              td.textContent = value || '—';
+            } else if (CAPABILITY_COLUMNS.includes(col)) {
+              td.innerHTML = `<span class="glyph">${escapeHtml(value || '—')}</span>`;
+            } else {
+              td.textContent = value || '—';
+            }
+
+            tr.appendChild(td);
+          });
+          fragment.appendChild(tr);
+        });
+
+        tbody.appendChild(fragment);
+      }
+
+      function renderCards(data) {
+        cardsEl.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+
+        data.forEach((r) => {
+          const article = document.createElement('article');
+          article.className = 'card';
+
+          const toolName = escapeHtml(r['Tool'] || 'Unknown tool');
+          const repo = safeUrl(r['Repo URL']);
+
+          article.innerHTML = `
+            <h2>${repo ? `<a href="${escapeHtml(repo)}" target="_blank" rel="noopener noreferrer">${toolName}</a>` : toolName}</h2>
+            <div class="card-row"><b>Paper:</b>${escapeHtml(r['Paper'] || '—')}</div>
+            <div class="card-row"><b>Input:</b>${escapeHtml(r['Input data'] || '—')}</div>
+            <div class="card-row"><b>Outputs:</b>${escapeHtml(r['Outputs'] || '—')}</div>
+            <div class="cap-grid">
+              ${CAPABILITY_COLUMNS.map((c) => `<div class="cap-item"><span>${escapeHtml(c)}</span><span>${escapeHtml(r[c] || '—')}</span></div>`).join('')}
+            </div>
+          `;
+
+          fragment.appendChild(article);
+        });
+
+        cardsEl.appendChild(fragment);
+      }
+
+      function render() {
+        const filtered = filterRows().sort((a, b) => compareRows(a, b, sortState.col, sortState.dir));
+        renderHeader();
+        renderTable(filtered);
+        renderCards(filtered);
+        statsEl.textContent = `Showing ${filtered.length} of ${rows.length} tools`;
+
+        statusEl.style.display = 'none';
+        tableWrap.style.display = window.matchMedia('(min-width: 920px)').matches ? 'block' : 'none';
+      }
+
+      searchEl.addEventListener('input', render);
+      window.addEventListener('resize', render);
+
+      render();
+    })();
+  </script>
+</body>
+</html>
