@@ -10,12 +10,3 @@ A public catalog of computational tools for **cfDNA**, **ctDNA**, liquid biopsy,
 
 - 🔍 **[Live viewer](https://odinokov.github.io/cfdna-tools/)** — sortable, searchable table
 - 📊 **[`tools.csv`](./tools.csv)** — source data
-
-## Legend
-
-| | |
-|---|---|
-| ✅ | Native support |
-| 🟡 | Partial / wrapper / limited |
-| ❌ | Not supported |
-| ❓ | Unclear from public docs |

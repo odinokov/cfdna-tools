@@ -45,6 +45,22 @@
 
     .muted { color: var(--muted); }
 
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem .8rem;
+      margin: .75rem 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      white-space: nowrap;
+    }
+
     .toolbar {
       display: grid;
       grid-template-columns: 1fr;
@@ -202,6 +218,12 @@
     <header>
       <h1>cfDNA Tools</h1>
       <p class="muted">A searchable catalog of cfDNA tools for WGS, methylation, CNA, motif, coverage, and tissue-origin workflows. Produced with AI assistance. Check important info manually.</p>
+      <div class="legend" aria-label="Legend">
+        <span class="legend-item"><span aria-hidden="true">✅</span> Native support</span>
+        <span class="legend-item"><span aria-hidden="true">🟡</span> Partial / wrapper / limited</span>
+        <span class="legend-item"><span aria-hidden="true">❌</span> Not supported</span>
+        <span class="legend-item"><span aria-hidden="true">❓</span> Unclear from public docs</span>
+      </div>
     </header>
 
     <section class="toolbar" aria-label="viewer controls">
