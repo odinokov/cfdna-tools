@@ -103,16 +103,44 @@
     }
 
     .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--panel);
+      overflow-x: auto;
+      overflow-y: visible;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: transparent;
       display: none;
+      position: relative;
+      box-shadow: inset -28px 0 24px -26px rgba(0,0,0,.85);
+      scrollbar-color: #465162 transparent;
+      scrollbar-width: thin;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: #465162;
+      border-radius: 999px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb:hover {
+      background: #5d6b80;
+      border: 3px solid transparent;
+      background-clip: content-box;
     }
 
     table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       min-width: 980px;
     }
 
@@ -121,16 +149,32 @@
       padding: .65rem .7rem;
       vertical-align: top;
       font-size: .9rem;
+      background: transparent;
     }
 
     th {
       text-align: left;
-      background: #1d2430;
+      background: #151a22;
       color: #cfd7e3;
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: 3;
       white-space: nowrap;
+    }
+
+    tbody tr:hover td {
+      background: rgba(255,255,255,.025);
+    }
+
+    td:first-child {
+      min-width: 180px;
+      max-width: 240px;
+      font-weight: 600;
+    }
+
+    th:first-child {
+      min-width: 180px;
+      max-width: 240px;
     }
 
     th button {
@@ -152,6 +196,38 @@
       justify-content: center;
       min-width: 1.5rem;
       font-size: 1rem;
+    }
+
+    .cap-hint {
+      position: relative;
+    }
+
+    .cap-hint::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + .45rem);
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 240px;
+      padding: .45rem .55rem;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #0b0d11;
+      color: var(--text);
+      font-size: .78rem;
+      line-height: 1.35;
+      white-space: normal;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease;
+      z-index: 10;
+    }
+
+    .cap-hint:hover::after,
+    .cap-hint:focus-visible::after {
+      opacity: 1;
     }
 
     .cards {
@@ -209,7 +285,13 @@
       .toolbar { grid-template-columns: 1fr auto; align-items: end; }
       .toolbar-row { grid-template-columns: minmax(320px, 1fr); }
       .cards { display: none; }
-      .table-wrap { display: block; }
+      .table-wrap {
+        display: block;
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        padding-left: max(1.5rem, calc((100vw - 1200px) / 2));
+        padding-right: max(1.5rem, calc((100vw - 1200px) / 2));
+      }
     }
   </style>
 </head>
@@ -316,6 +398,23 @@
 
       const symbolOrder = { '✅': 0, '🟡': 1, '❓': 2, '❌': 3, 'N/A': 4, '': 5 };
       const symbolRank = (v) => symbolOrder[String(v || '').trim()] ?? 9;
+      const supportText = {
+        '✅': 'Native support',
+        '🟡': 'Partial, wrapper-based, or limited support',
+        '❌': 'Not supported',
+        '❓': 'Unclear from public documentation'
+      };
+      const capabilityHint = (col, value) => {
+        const symbol = String(value || '').trim();
+        const support = supportText[symbol];
+        return support ? `${col}: ${support}.` : '';
+      };
+      const capabilityMark = (col, value) => {
+        const symbol = String(value || '—').trim() || '—';
+        const hint = capabilityHint(col, symbol);
+        if (!hint) return `<span class="glyph">${escapeHtml(symbol)}</span>`;
+        return `<span class="glyph cap-hint" tabindex="0" aria-label="${escapeHtml(hint)}" data-tooltip="${escapeHtml(hint)}">${escapeHtml(symbol)}</span>`;
+      };
 
       let rows = [];
       let sortState = { col: 'Tool', dir: 'asc' };
@@ -408,7 +507,7 @@
             } else if (col === 'Paper') {
               td.textContent = value || '—';
             } else if (CAPABILITY_COLUMNS.includes(col)) {
-              td.innerHTML = `<span class="glyph">${escapeHtml(value || '—')}</span>`;
+              td.innerHTML = capabilityMark(col, value);
             } else {
               td.textContent = value || '—';
             }
@@ -438,7 +537,7 @@
             <div class="card-row"><b>Input:</b>${escapeHtml(r['Input data'] || '—')}</div>
             <div class="card-row"><b>Outputs:</b>${escapeHtml(r['Outputs'] || '—')}</div>
             <div class="cap-grid">
-              ${CAPABILITY_COLUMNS.map((c) => `<div class="cap-item"><span>${escapeHtml(c)}</span><span>${escapeHtml(r[c] || '—')}</span></div>`).join('')}
+              ${CAPABILITY_COLUMNS.map((c) => `<div class="cap-item"><span>${escapeHtml(c)}</span>${capabilityMark(c, r[c])}</div>`).join('')}
             </div>
           `;
 
