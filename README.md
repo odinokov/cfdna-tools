@@ -6,6 +6,8 @@ A public catalog of computational tools for **cfDNA**, **ctDNA**, liquid biopsy,
 
 **Release:** April 25, 2026
 
+**Last updated:** May 15, 2026
+
 ## Browse
 
 - 🔍 **[Live viewer](https://odinokov.github.io/cfdna-tools/)** — sortable, searchable table
