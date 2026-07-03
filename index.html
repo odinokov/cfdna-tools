@@ -281,7 +281,6 @@
       const theadRow = document.getElementById('theadRow');
       const tbody = document.getElementById('tbody');
       const cardsEl = document.getElementById('cards');
-      const tableWrap = document.getElementById('tableWrap');
 
       const escapeHtml = (v) => String(v ?? '').replace(/[&<>"']/g, (ch) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
       const decodeHtml = (v) => {
@@ -341,7 +340,7 @@
           const parsedTool = parseToolCell(kept['Tool']);
           kept['Tool'] = parsedTool.name;
           kept['Repo URL'] = safeUrl(valueFromAliases(cleaned, REPO_COLUMN_ALIASES)) || safeUrl(parsedTool.repo);
-          kept._searchText = Object.values(cleaned).join(' ');
+          kept._searchLower = Object.values(cleaned).join(' ').toLowerCase();
           return kept;
         });
       } catch (err) {
@@ -349,13 +348,13 @@
         return;
       }
 
-      function renderHeader() {
+      const headerButtons = {};
+      function buildHeader() {
         theadRow.innerHTML = '';
         KEPT_COLUMNS.forEach((col) => {
           const th = document.createElement('th');
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.textContent = sortState.col === col ? `${col} ${sortState.dir === 'asc' ? '▲' : '▼'}` : col;
           btn.addEventListener('click', () => {
             if (sortState.col === col) {
               sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
@@ -367,6 +366,15 @@
           });
           th.appendChild(btn);
           theadRow.appendChild(th);
+          headerButtons[col] = btn;
+        });
+      }
+
+      function updateHeaderArrows() {
+        KEPT_COLUMNS.forEach((col) => {
+          headerButtons[col].textContent = sortState.col === col
+            ? `${col} ${sortState.dir === 'asc' ? '▲' : '▼'}`
+            : col;
         });
       }
 
@@ -387,7 +395,7 @@
       function filterRows() {
         const q = searchEl.value.trim().toLowerCase();
         if (!q) return [...rows];
-        return rows.filter((r) => String(r._searchText || '').toLowerCase().includes(q));
+        return rows.filter((r) => r._searchLower.includes(q));
       }
 
       function renderTable(data) {
@@ -448,20 +456,27 @@
         cardsEl.appendChild(fragment);
       }
 
+      // Mirrors the CSS @media (min-width: 920px) rule that shows the table / hides the cards.
+      const desktopMq = window.matchMedia('(min-width: 920px)');
+
       function render() {
         const filtered = filterRows().sort((a, b) => compareRows(a, b, sortState.col, sortState.dir));
-        renderHeader();
-        renderTable(filtered);
-        renderCards(filtered);
+        updateHeaderArrows();
+        if (desktopMq.matches) renderTable(filtered);
+        else renderCards(filtered);
         statsEl.textContent = `Showing ${filtered.length} of ${rows.length} tools`;
 
         statusEl.style.display = 'none';
-        tableWrap.style.display = window.matchMedia('(min-width: 920px)').matches ? 'block' : 'none';
       }
 
-      searchEl.addEventListener('input', render);
-      window.addEventListener('resize', render);
+      let searchTimer;
+      searchEl.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(render, 120);
+      });
+      desktopMq.addEventListener('change', render);
 
+      buildHeader();
       render();
     })();
   </script>
