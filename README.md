@@ -8,6 +8,8 @@ A public catalog of computational tools for **cfDNA**, **ctDNA**, liquid biopsy,
 
 **Last update:** July 29, 2026
 
+**Tools:** 138
+
 ## Browse
 
 - 🔍 **[Live viewer](https://odinokov.github.io/cfdna-tools/)** — sortable, searchable table
