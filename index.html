@@ -13,8 +13,13 @@
   <meta name="google-site-verification" content="3GMkX5388dYS1Og37YTUQF8VqYhWpvbgSyzcdnOSr7w" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>cfDNA Tools</title>
-  <meta name="description" content="A searchable catalog of cfDNA tools for WGS, methylation, CNA, motif, coverage, and tissue-origin workflows. Produced with AI assistance. Check important info manually." />
+  <title>cfDNA Bioinformatics Tools | ctDNA & Liquid Biopsy Software</title>
+  <meta name="description" content="Search and compare cfDNA and ctDNA bioinformatics tools for fragmentomics, WGS, methylation, copy-number analysis, end motifs, coverage, and tissue-of-origin workflows and analysis." />
+  <link rel="canonical" href="https://odinokov.github.io/cfdna-tools/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://odinokov.github.io/cfdna-tools/" />
+  <meta property="og:title" content="cfDNA Bioinformatics Tools" />
+  <meta property="og:description" content="Search and compare computational tools for cfDNA, ctDNA, fragmentomics, methylation, CNA, WGS, and tissue-of-origin analysis." />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     :root {
@@ -29,6 +34,18 @@
     }
 
     * { box-sizing: border-box; }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
 
     body {
       margin: 0;
@@ -214,6 +231,17 @@
       font-size: .8rem;
     }
 
+    .contribute {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .contribute strong { color: var(--text); }
+
     @media (min-width: 920px) {
       .wrap { padding: 1.5rem; }
       .toolbar { grid-template-columns: 1fr auto; align-items: end; }
@@ -227,7 +255,7 @@
   <div class="wrap">
     <header>
       <h1>cfDNA Tools</h1>
-      <p class="muted">A searchable catalog of cfDNA tools for WGS, methylation, CNA, motif, coverage, and tissue-origin workflows. Produced with AI assistance. Check important info.</p>
+      <p class="muted">A searchable catalog of cfDNA bioinformatics tools for WGS, methylation, CNA, end motif, coverage, and tissue-origin analysis. Produced with AI assistance. Check important info.</p>
       <div class="legend" aria-label="Legend">
         <span class="legend-item"><span aria-hidden="true">✅</span> Native support</span>
         <span class="legend-item"><span aria-hidden="true">🟡</span> Partial / wrapper / limited</span>
@@ -238,7 +266,8 @@
 
     <section class="toolbar" aria-label="viewer controls">
       <div class="toolbar-row">
-        <input id="search" type="search" placeholder="Search tool, paper, inputs, outputs, capabilities…" />
+        <label for="search" class="visually-hidden">Search tools</label>
+        <input id="search" type="search" aria-label="Search tools" placeholder="Search tool, paper, inputs, outputs, capabilities…" />
       </div>
       <div id="stats" class="stats">Loading…</div>
     </section>
@@ -253,13 +282,19 @@
     </section>
 
     <section id="cards" class="cards" aria-label="mobile card view"></section>
+
+    <footer class="contribute">
+      <strong>Know a cfDNA tool that should be here?</strong>
+      Send me the repository or paper on
+      <a href="https://www.linkedin.com/in/odinokov/" target="_blank" rel="noopener noreferrer">LinkedIn</a>.
+    </footer>
   </div>
 
   <script>
     (async function () {
       const KEPT_COLUMNS = [
         'Tool', 'Paper', 'Input data', 'Outputs',
-        'Fragment size', 'Motifs', 'Coverage / WPS', 'Methylation',
+        'Fragment size', 'End motifs', 'Coverage / WPS', 'Methylation',
         'SNV / CNA', 'Region-level', 'Tissue origin', 'GC / bias'
       ];
 
@@ -271,7 +306,7 @@
         'Input data': ['Input data', 'Inputs', 'Input'],
         'Outputs': ['Outputs', 'Output'],
         'Fragment size': ['Fragment size', 'Fragment sizes'],
-        'Motifs': ['Motifs', 'End motifs'],
+        'End motifs': ['End motifs', 'Motifs'],
         'Coverage / WPS': ['Coverage / WPS', 'Coverage/WPS', 'Coverage', 'WPS'],
         'Methylation': ['Methylation'],
         'SNV / CNA': ['SNV / CNA', 'SNV/CNA', 'SNV', 'CNA'],
@@ -281,7 +316,7 @@
       };
 
       const CAPABILITY_COLUMNS = [
-        'Fragment size', 'Motifs', 'Coverage / WPS', 'Methylation',
+        'Fragment size', 'End motifs', 'Coverage / WPS', 'Methylation',
         'SNV / CNA', 'Region-level', 'Tissue origin', 'GC / bias'
       ];
 
@@ -325,6 +360,9 @@
 
       const symbolOrder = { '✅': 0, '🟡': 1, '❓': 2, '❌': 3, 'N/A': 4, '': 5 };
       const symbolRank = (v) => symbolOrder[String(v || '').trim()] ?? 9;
+
+      const CAP_LABELS = { '✅': 'Native support', '🟡': 'Partial, wrapper or limited', '❌': 'Not supported', '❓': 'Unclear from public docs', 'N/A': 'Not applicable' };
+      const capLabel = (v) => { const s = String(v || '').trim(); return CAP_LABELS[s] || (s || 'No data'); };
 
       let rows = [];
       let sortState = { col: 'Tool', dir: 'asc' };
@@ -426,7 +464,7 @@
             } else if (col === 'Paper') {
               td.textContent = value || '—';
             } else if (CAPABILITY_COLUMNS.includes(col)) {
-              td.innerHTML = `<span class="glyph">${escapeHtml(value || '—')}</span>`;
+              td.innerHTML = `<span class="glyph" role="img" aria-label="${escapeHtml(col + ': ' + capLabel(value))}">${escapeHtml(value || '—')}</span>`;
             } else {
               td.textContent = value || '—';
             }
@@ -456,7 +494,7 @@
             <div class="card-row"><b>Input:</b>${escapeHtml(r['Input data'] || '—')}</div>
             <div class="card-row"><b>Outputs:</b>${escapeHtml(r['Outputs'] || '—')}</div>
             <div class="cap-grid">
-              ${CAPABILITY_COLUMNS.map((c) => `<div class="cap-item"><span>${escapeHtml(c)}</span><span>${escapeHtml(r[c] || '—')}</span></div>`).join('')}
+              ${CAPABILITY_COLUMNS.map((c) => `<div class="cap-item"><span>${escapeHtml(c)}</span><span role="img" aria-label="${escapeHtml(capLabel(r[c]))}">${escapeHtml(r[c] || '—')}</span></div>`).join('')}
             </div>
           `;
 
