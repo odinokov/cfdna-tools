@@ -8,7 +8,7 @@ A public catalog of computational tools for **cfDNA**, **ctDNA**, liquid biopsy,
 
 **Last update:** September 5, 2026
 
-**Tools:** 141
+**Tools:** 142
 
 ## Browse
 
