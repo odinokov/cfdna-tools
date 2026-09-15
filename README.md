@@ -5,7 +5,7 @@ analysis — fragmentomics, methylation, copy-number, end motifs, coverage/WPS,
 and tissue-of-origin workflows.
 
 [![Live viewer](https://img.shields.io/badge/live-viewer-2ea44f?logo=github)](https://odinokov.github.io/cfdna-tools/)
-[![Tools](https://img.shields.io/badge/tools-142-2ea44f)](./tools.csv)
+[![Tools](https://img.shields.io/badge/tools-144-2ea44f)](./tools.csv)
 [![Last commit](https://img.shields.io/github/last-commit/odinokov/cfdna-tools)](https://github.com/odinokov/cfdna-tools/commits/main)
 [![License: CC0-1.0](https://img.shields.io/badge/license-CC0--1.0-lightgrey)](./LICENSE)
 
@@ -14,7 +14,7 @@ and tissue-of-origin workflows.
 ## Browse
 
 - 🔍 **[Live viewer](https://odinokov.github.io/cfdna-tools/)** — sortable, searchable table
-- 📊 **[`tools.csv`](./tools.csv)** — source data (UTF-8, 142 tools)
+- 📊 **[`tools.csv`](./tools.csv)** — source data (UTF-8, 144 tools)
 
 ## What's inside
 
@@ -41,4 +41,4 @@ each listed tool keeps its own license.
 
 ---
 
-**Release:** April 25, 2026 · **Last update:** September 5, 2026
+**Release:** April 25, 2026 · **Last update:** September 15, 2026
