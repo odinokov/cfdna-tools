@@ -41,4 +41,4 @@ each listed tool keeps its own license.
 
 ---
 
-**Release:** April 25, 2026 · **Last update:** October 20, 2026
+**Release:** April 25, 2026 · **Last update:** November 11, 2026
